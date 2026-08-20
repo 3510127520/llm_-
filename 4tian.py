@@ -2,33 +2,71 @@
 folder_path= input("请输入文件夹需要扫描路径")
 from pathlib import Path
 
-stats ={} #空字典
+#第一个函数：负责扫描循环拿文件
+def scan_folder(folder_path,filter_ext=None):
+    """扫描文件及，统计文件类型，支持过滤扩展名"""
+    folder =Path(folder_path)
+    if not folder.exists():#检查路径是否存在，如果不存在主动抛出个错误
+        raise ValueError(f"路径不存在:{folder_path}")#raise是抛出错误信息的作用
 
-folder =Path(folder_path) #找遍文件夹下所有文件（不包括子文件夹）
-for file_path in folder.iterdir():#for  in  循环拿取 older.iterdir() 启动了扫描仪
-    if file_path.is_file():#判断这个东西是文件吗
-        print(file_path.name)  #只打印名字
-#获取扩展名
-        extension = file_path.suffix #比如".txt"
+    #检查路径是不是文件夹
+    if not folder.is_dir():
+        raise ValueError(f"不是文件夹:{folder_path}")
+    stats ={} #空字典
+    for file_path in folder.iterdir():#for  in  循环拿取 older.iterdir() 启动了扫描仪
+        if file_path.is_file():#判断这个东西是文件吗
+           extension = file_path.suffix #比如".txt"
 # 如果扩展名为空，则是说明没有扩展名的文件
-        stats[extension] =stats.get(extension,0) + 1
+           if filter_ext and extension !=filter_ext:#设置过滤，跳过不匹配的文件，filter_ext用来接受用户想过滤的扩展名
+               continue #作用跳过这个文件继续下一个
+           stats[extension] =stats.get(extension,0) + 1
 #用字典统计
+    return stats
 
+#第二个函数；负责生成要打印的文字
+def generate_report(stats):
+   lines =[]  #准备一个空列表，用来装报告这行 
+   lines.append("文件类型报告文件")
+   lines.append("-" * 30)
+   for exe, count in stats.items():
+     ext_display = exe if exe else "无扩展名"
+     lines.append(f"{ext_display}:{count}个")
+   return "\n".join(lines)#把列表拼成一段完整的文字
 
-#打印报告
-print("文件类型统计报告")
-print('-' * 30)
-for exe, count in stats.items():
-    ext_display = exe if exe else "无扩展名"
-    print(f"{ext_display}:{count}个")
+#第三个函数：负责把文字存进文件
+def sava_report(content, filename="report.txt"):
+   with open("report.txt","w",encoding="utf-8") as f:
+          f.write(content)
 
-#保存到文件
-with open("report.txt","w",encoding="utf-8") as f:
-    f.write("文件类型统计报告\n")
-    f.write('-' * 30 + "\n")
-    for exe, count in stats.items():
-       ext_display = exe if exe else "无扩展名"
-       f.write(f'{ext_display}:{count}个\n')
+#总指挥：把上面三个函数组合起来使用
+def main():
+    #1,问地址
+    folder_path = input("请输入文件夹需要扫描路径；")
+#询问是否要过滤的扩展名字
+    filter_input = input("请输入要过滤的扩展名字（如.txt，直接回车不过滤）；").strip()
+    filter_ext = filter_input if filter_input else None
+    
+#使用try/except 包裹可能出错的代码，如果try出错了会跳到excpet，excpet放出错执行的内容
+    try:
+    #调用1，拿到统计结果
+     stats = scan_folder(folder_path,filter_ext)
+    #调用2，生成报告文字
+     report = generate_report(stats)
+    #打印到屏幕
+     print(report)
+    #调用3，保存文件
+     sava_report(report)
+     print("\n报告已经保存到report.txt")
+    except ValueError as e:#把错误内容存到变量e里面
+        #用户输入错误路径时，显示友好提示
+        print(f"错误：{e}")#有变量的时候打印就需要加f，他可以把变量里的内容显示出来，而不是打印变量本身这个e
+        print("请检查路径是否正确，然后重新运行程序。")
+    except Exception as e:
+        #其他未知错误
+        print(f"发生未知错误：{e}")
+        print("请截图这个错误信息，联系ai")
 
-print("\n报告已保存到 report.txt")
-            
+#这句话是告诉python：只有当我主动运行这个文件时，才执行总指挥
+if __name__ == "__main__":
+    main()   
+        
