@@ -3,7 +3,7 @@ folder_path= input("请输入文件夹需要扫描路径")
 from pathlib import Path
 
 #第一个函数：负责扫描循环拿文件
-def scan_folder(folder_path,filter_ext=None):
+def scan_folder(folder_path,filter_ext=None,search_key=None):
     """扫描文件及，统计文件类型，支持过滤扩展名"""
     folder =Path(folder_path)
     if not folder.exists():#检查路径是否存在，如果不存在主动抛出个错误
@@ -15,6 +15,8 @@ def scan_folder(folder_path,filter_ext=None):
     stats ={} #空字典
     for file_path in folder.iterdir():#for  in  循环拿取 older.iterdir() 启动了扫描仪
         if file_path.is_file():#判断这个东西是文件吗
+           if search_key and search_key.lower() not in file_path.name.lower():#加一个搜索功能，这个是判断是不是这个搜索的关键词
+               continue
            extension = file_path.suffix #比如".txt"
 # 如果扩展名为空，则是说明没有扩展名的文件
            if filter_ext and extension !=filter_ext:#设置过滤，跳过不匹配的文件，filter_ext用来接受用户想过滤的扩展名
@@ -45,11 +47,13 @@ def main():
 #询问是否要过滤的扩展名字
     filter_input = input("请输入要过滤的扩展名字（如.txt，直接回车不过滤）；").strip()
     filter_ext = filter_input if filter_input else None
-    
+
+    search_input = input("请输入文件关键词（直接回车跳过）；".split())
+    search_key = search_input if search_input else None
 #使用try/except 包裹可能出错的代码，如果try出错了会跳到excpet，excpet放出错执行的内容
     try:
     #调用1，拿到统计结果
-     stats = scan_folder(folder_path,filter_ext)
+     stats = scan_folder(folder_path,filter_ext,search_key)
     #调用2，生成报告文字
      report = generate_report(stats)
     #打印到屏幕
