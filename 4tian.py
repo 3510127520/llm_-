@@ -1,6 +1,18 @@
   #让用户输入文件夹路径
 folder_path= input("请输入文件夹需要扫描路径")
+import logging
 from pathlib import Path
+
+#配置日志
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s -%(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S',
+    handlers=[
+        logging.StreamHandler(),#输出到屏幕
+        logging.FileHandler('app.log',encoding='utf-8')#输出到文件
+    ]
+)
 
 #第一个函数：负责扫描循环拿文件
 def scan_folder(folder_path,filter_ext=None,search_key=None):
@@ -40,6 +52,7 @@ def sava_report(content, filename="report.txt"):
    with open("report.txt","w",encoding="utf-8") as f:
           f.write(content)
 
+
 #总指挥：把上面三个函数组合起来使用
 def main():
     #1,问地址
@@ -48,7 +61,7 @@ def main():
     filter_input = input("请输入要过滤的扩展名字（如.txt，直接回车不过滤）；").strip()
     filter_ext = filter_input if filter_input else None
 
-    search_input = input("请输入文件关键词（直接回车跳过）；".split())
+    search_input = input("请输入文件关键词（直接回车跳过）；").split()
     search_key = search_input if search_input else None
 #使用try/except 包裹可能出错的代码，如果try出错了会跳到excpet，excpet放出错执行的内容
     try:
@@ -60,15 +73,15 @@ def main():
      print(report)
     #调用3，保存文件
      sava_report(report)
-     print("\n报告已经保存到report.txt")
+     logging.info("\n报告已经保存到report.txt")
     except ValueError as e:#把错误内容存到变量e里面
         #用户输入错误路径时，显示友好提示
-        print(f"错误：{e}")#有变量的时候打印就需要加f，他可以把变量里的内容显示出来，而不是打印变量本身这个e
-        print("请检查路径是否正确，然后重新运行程序。")
+        logging.error(f"错误：{e}")#有变量的时候打印就需要加f，他可以把变量里的内容显示出来，而不是打印变量本身这个e
+        logging.info("请检查路径是否正确，然后重新运行程序。")
     except Exception as e:
         #其他未知错误
-        print(f"发生未知错误：{e}")
-        print("请截图这个错误信息，联系ai")
+        logging.error(f"发生未知错误：{e}")
+        logging.info("请截图这个错误信息，联系ai")
 
 #这句话是告诉python：只有当我主动运行这个文件时，才执行总指挥
 if __name__ == "__main__":
