@@ -38,18 +38,31 @@ def scan_folder(folder_path,filter_ext=None,search_key=None):
     return stats
 
 #第二个函数；负责生成要打印的文字
-def generate_report(stats):
+def generate_report(stats,folder_path):#生成Markdown格式（让打印的文字更好看，有大有小有加粗）的统计报告
    lines =[]  #准备一个空列表，用来装报告这行 
-   lines.append("文件类型报告文件")
-   lines.append("-" * 30)
+   #标题
+   lines.append(f"#文件类型报告文件")
+   lines.append(f"")
+   lines.append(f"**扫描路径**:'{folder_path}'")
+   lines.append(f"**扫描时间:{__import__('datetime').datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+   lines.append(f"")
+   lines.append(f"##统计结果")
+   lines.append(f"")
+   lines.append(f"|文件类型|数量|")
+   lines.append(f"| :--- | :--- |")
    for exe, count in stats.items():
      ext_display = exe if exe else "无扩展名"
-     lines.append(f"{ext_display}:{count}个")
+     lines.append(f"|{ext_display}:{count}|")
+#总计
+   total = sum(stats.values())
+   lines.append(f"")
+   lines.append(f"**总计**: {total}个文件")
    return "\n".join(lines)#把列表拼成一段完整的文字
 
 #第三个函数：负责把文字存进文件
-def sava_report(content, filename="report.txt"):
-   with open("report.txt","w",encoding="utf-8") as f:
+def sava_report(content, filename="report.md"):
+   #保存报告到Markdown文件
+   with open(filename,"w",encoding="utf-8") as f:
           f.write(content)
 
 
@@ -68,7 +81,7 @@ def main():
     #调用1，拿到统计结果
      stats = scan_folder(folder_path,filter_ext,search_key)
     #调用2，生成报告文字
-     report = generate_report(stats)
+     report = generate_report(stats,folder_path)
     #打印到屏幕
      print(report)
     #调用3，保存文件
