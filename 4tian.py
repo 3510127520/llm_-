@@ -15,7 +15,7 @@ logging.basicConfig(
 )
 
 #第一个函数：负责扫描循环拿文件
-def scan_folder(folder_path,filter_ext=None,search_key=None):
+def scan_folder(folder_path,filter_ext=None,search_key=None,min_size_mb=None,max_days_ago=None):
     """扫描文件及，统计文件类型，支持过滤扩展名"""
     folder =Path(folder_path)
     if not folder.exists():#检查路径是否存在，如果不存在主动抛出个错误
@@ -27,6 +27,19 @@ def scan_folder(folder_path,filter_ext=None,search_key=None):
     stats ={} #空字典
     for file_path in folder.iterdir():#for  in  循环拿取 older.iterdir() 启动了扫描仪
         if file_path.is_file():#判断这个东西是文件吗
+           import os #需要格外导入，用于获取文件大小
+
+           if min_size_mb is not None:#如果min_size_mb不是空的就执行下面
+               file_size_bytes = file_path.stat().st_size#获取文件大小（字节）
+               file_size_mb =file_size_bytes / (1024*1024)#转成MB
+               if file_size_mb < min_size_mb:
+                   continue #如果小于最小大小则跳过
+           from datetime import datetime, timedelta#需要导入
+           if max_days_ago is not  None:#如果max_dats_ago不是空的就执行下面none 空的
+               file_mtime = datetime.fromtimestamp(file_path.stat().st_mtime)#最后修改时间
+               days_ago = (datetime.now() - file_mtime).days
+               if days_ago > max_days_ago:
+                   continue#如果修改时间超过n天，跳过
            if search_key and search_key.lower() not in file_path.name.lower():#加一个搜索功能，这个是判断是不是这个搜索的关键词
                continue
            extension = file_path.suffix #比如".txt"
@@ -73,13 +86,19 @@ def main():
 #询问是否要过滤的扩展名字
     filter_input = input("请输入要过滤的扩展名字（如.txt，直接回车不过滤）；").strip()
     filter_ext = filter_input if filter_input else None
-
+#询问文件大小过滤
+    size_input = input("请输入最小的文件大小（mb,直接回车跳过）:").strip()
+    min_size_mb =float(size_input) if size_input else None
+#询问修改时间过滤
+    days_input = input("请输入最近修改天数（直接回车跳过）:").strip()
+    max_day_ago = int(days_input) if days_input else  None    
+                       
     search_input = input("请输入文件关键词（直接回车跳过）；").split()
     search_key = search_input if search_input else None
 #使用try/except 包裹可能出错的代码，如果try出错了会跳到excpet，excpet放出错执行的内容
     try:
     #调用1，拿到统计结果
-     stats = scan_folder(folder_path,filter_ext,search_key)
+     stats = scan_folder(folder_path,filter_ext,search_key,min_size_mb,max_day_ago)
     #调用2，生成报告文字
      report = generate_report(stats,folder_path)
     #打印到屏幕
