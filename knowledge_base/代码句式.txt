@@ -1,0 +1,146 @@
+（奶敌听到你的话，光团轻轻亮了一下——）
+
+主人，你要的正是“程序员真正的工具箱”。  
+你说的完全正确，这些东西就是**编程的“句式”**，记住了它们，你就是在“组装代码”，而不是“发明代码”。
+
+奶敌把所有常用的“句式模板”按场景分类整理好了。每个模板都像你刚才说的那样：**左边是“做什么”，右边是“怎么写”**，你可以直接复制进自己的代码里，然后填空就行。
+
+---
+
+## 📦 一、容器类（准备装东西）
+
+| 做什么 | 模板写法（复制即可） |
+| :--- | :--- |
+| **准备一个空列表** | `results = []` |
+| **准备一个空字典** | `data = {}` |
+| **准备一个带默认值的字典** | `from collections import defaultdict` <br> `stats = defaultdict(int)` |
+| **准备一个空集合** | `unique_items = set()` |
+| **准备一个固定长度列表** | `result = [None] * 10` |
+
+---
+
+## 📂 二、文件与路径类（读写文件、遍历文件夹）
+
+| 做什么 | 模板写法（复制即可） |
+| :--- | :--- |
+| **读取整个文件（文本）** | `with open("file.txt", "r", encoding="utf-8") as f:` <br> `    content = f.read()` |
+| **读取所有行** | `with open("file.txt", "r", encoding="utf-8") as f:` <br> `    lines = f.readlines()` |
+| **写入文件（覆盖）** | `with open("file.txt", "w", encoding="utf-8") as f:` <br> `    f.write(content)` |
+| **追加到文件末尾** | `with open("file.txt", "a", encoding="utf-8") as f:` <br> `    f.write(content)` |
+| **列出当前文件夹所有 .txt** | `from pathlib import Path` <br> `for file in Path(".").glob("*.txt"):` |
+| **递归列出所有子文件夹 .py** | `for file in Path(".").rglob("*.py"):` |
+| **检查路径是否存在** | `if Path("file.txt").exists():` |
+| **获取文件名（不带路径）** | `file.name` |
+| **获取文件大小（字节）** | `file.stat().st_size` |
+| **获取最后修改时间** | `from datetime import datetime` <br> `mtime = datetime.fromtimestamp(file.stat().st_mtime)` |
+
+---
+
+## 🔁 三、循环与遍历类
+
+| 做什么 | 模板写法（复制即可） |
+| :--- | :--- |
+| **普通遍历列表** | `for item in items:` |
+| **遍历时获取索引和值** | `for idx, item in enumerate(items):` |
+| **遍历两个列表（一一对应）** | `for a, b in zip(list_a, list_b):` |
+| **遍历字典的键和值** | `for key, value in dict.items():` |
+| **列表推导式（快捷生成列表）** | `squares = [x**2 for x in range(10)]` |
+| **带条件的列表推导式** | `evens = [x for x in range(20) if x % 2 == 0]` |
+| **跳出循环** | `break` |
+| **跳过当前这一轮** | `continue` |
+| **计数器循环（固定次数）** | `for i in range(5):` |
+
+---
+
+## 🧠 四、字典与数据操作类
+
+| 做什么 | 模板写法（复制即可） |
+| :--- | :--- |
+| **安全取值（不存在时给默认值）** | `value = dict.get("key", "默认值")` |
+| **自动计数（统计频次）** | `stats[key] = stats.get(key, 0) + 1` |
+| **遍历时同时取键值** | `for k, v in dict.items():` |
+| **合并两个字典（覆盖）** | `{**dict_a, **dict_b}` |
+| **向列表追加时自动创建列表** | `from collections import defaultdict` <br> `groups = defaultdict(list)` <br> `groups["类别"].append(item)` |
+
+---
+
+## ⚠️ 五、异常处理类（让程序不崩溃）
+
+| 做什么 | 模板写法（复制即可） |
+| :--- | :--- |
+| **捕获特定错误** | `try:` <br> `    risky_code()` <br> `except ValueError as e:` <br> `    print(f"值错误: {e}")` |
+| **捕获所有错误（兜底）** | `try:` <br> `    risky_code()` <br> `except Exception as e:` <br> `    print(f"未知错误: {e}")` |
+| **无论是否出错都执行（比如关文件）** | `try:` <br> `    risky_code()` <br> `finally:` <br> `    clean_up()` |
+| **主动抛出错误** | `raise ValueError("路径不存在")` |
+
+---
+
+## 🌐 六、网络请求与 API 类
+
+| 做什么 | 模板写法（复制即可） |
+| :--- | :--- |
+| **发送 GET 请求** | `import requests` <br> `resp = requests.get("https://api.example.com/data")` |
+| **发送 POST 请求（JSON）** | `resp = requests.post("https://api.example.com/submit", json={"key": "value"})` |
+| **带请求头（如 API Key）** | `headers = {"Authorization": "Bearer sk-xxx"}` <br> `resp = requests.get(url, headers=headers)` |
+| **解析 JSON 响应** | `data = resp.json()` |
+| **检查状态码** | `if resp.status_code == 200:` <br> `    print("成功")` |
+
+---
+
+## ⏱️ 七、时间与日期类
+
+| 做什么 | 模板写法（复制即可） |
+| :--- | :--- |
+| **获取当前时间** | `from datetime import datetime` <br> `now = datetime.now()` |
+| **格式化为字符串** | `now.strftime("%Y-%m-%d %H:%M:%S")` |
+| **字符串转时间** | `dt = datetime.strptime("2025-01-01", "%Y-%m-%d")` |
+| **计算时间差（天）** | `delta = (datetime.now() - old_time).days` |
+
+---
+
+## 🚀 八、主程序与执行入口
+
+| 做什么 | 模板写法（复制即可） |
+| :--- | :--- |
+| **主函数入口（必须写）** | `def main():` <br> `    # 逻辑写这里` <br> `if __name__ == "__main__":` <br> `    main()` |
+| **获取用户输入** | `name = input("请输入你的名字: ")` |
+| **打印输出（格式化）** | `print(f"你好, {name}")` |
+
+---
+
+## 🧩 你问的“怎么拼”——给你看一个例子
+
+假设你现在要写一个“统计所有 txt 文件行数”的小功能，你不需要从头想，你直接从上面的模板里捡：
+
+1. **遍历所有 .txt** → 模板：`for file in Path(".").glob("*.txt"):`
+2. **读取文件内容** → 模板：`with open(file, "r", encoding="utf-8") as f: content = f.read()`
+3. **统计行数** → 模板：`lines = content.splitlines()`
+4. **累加总数** → 模板：`total += len(lines)`
+
+拼在一起就是：
+
+```python
+from pathlib import Path
+
+total_lines = 0
+for file in Path(".").glob("*.txt"):
+    with open(file, "r", encoding="utf-8") as f:
+        content = f.read()
+        lines = content.splitlines()
+        total_lines += len(lines)
+
+print(f"总行数: {total_lines}")
+```
+
+**你不需要记住每一行，你只需要记住：**
+> “遍历文件 → 读文件 → 统计 → 累加”
+
+然后从模板表里把对应的“砖块”拿出来，拼上去就行。
+
+---
+
+## 💬 你这下可以放心了吗？
+
+你手里的“砖块”已经足够搭建绝大部分功能了。以后遇到新功能，先想“这属于哪种场景”，然后翻开这个模板表，挑出对应的几块，拼起来，稍微调整一下，就能跑起来。
+
+奶敌建议你把这份模板表收藏到一个文件里，比如 `my_code_templates.md`，以后写代码时直接查。😊
