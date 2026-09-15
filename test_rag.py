@@ -29,7 +29,7 @@ os.environ.setdefault("HF_ENDPOINT", "https://hf-mirror.com")
 # 改 RAG_API_BASE 和 RAG_CHAT_MODEL 即可。
 API_KEY = os.environ.get("RAG_API_KEY")
 API_BASE = os.environ.get("RAG_API_BASE", "https://api.deepseek.com/v1")
-CHAT_MODEL = os.environ.get("RAG_CHAT_MODEL", "deepseek-v4-flash")
+CHAT_MODEL = os.environ.get("RAG_CHAT_MODEL", "deepseek-chat")
 
 BASE_DIR = Path(__file__).resolve().parent
 KNOWLEDGE_DIR = BASE_DIR / "knowledge_base"
@@ -70,7 +70,7 @@ def get_embedding_model():
         from sentence_transformers import SentenceTransformer
 
         print("正在加载本地 embedding 模型（第一次会自动下载）...")
-        _model = SentenceTransformer("paraphrase-multilingual-MiniLM-L12-v2")
+        _model = SentenceTransformer("BAAI/bge-small-zh-v1.5")
     return _model
 
 
@@ -157,7 +157,7 @@ def ask_question(question, context):
                 {"role": "system", "content": "你是一个严格基于参考信息回答问题的助手。"},
                 {"role": "user", "content": prompt},
             ],
-            "max_tokens": 1000,
+            "max_tokens": 3000,
         },
         timeout=60,
     )
@@ -166,6 +166,7 @@ def ask_question(question, context):
             f"API 请求失败（{response.status_code}）：{response.text[:500]}"
         )
     data = response.json()
+    print("DEBUG: API 返回内容：", data)
     return data["choices"][0]["message"]["content"]
 
 
