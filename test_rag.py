@@ -62,6 +62,40 @@ def read_question():
                 continue
         return ""
 
+def rewrite_query(question):
+    """用大模型把用户问题改写得更适合检索"""
+    prompt = f"""请把下面的用户问题改写成一个更完整，更适合知识库检索的查询语句。
+要求：
+1. 保持原意不变
+2. 补充可能的上下文，让语义更完整
+3. 只输出改写后的句子，不要解释
+
+用户问题：{question}
+
+改写后："""
+    response = requests.post(
+        f"{API_BASE}/chat/completions",
+        headers={
+            "Authorization": f"Bearer{API_KEY}",
+            "Content-Type": "application/json",
+        },
+        json={
+            "model": CHAT_MODEL,
+            "messages":[
+                {"role":"user", "content": prompt},
+            ],
+            "max_tokens":200,
+        },
+        timeout=30,
+    )
+    if response.status_code !=200:
+        return question #如果改写失败，就用原问题
+    data =response.json()
+    rewritten = data["choices"][0]["message"]["content"].strip()
+    return rewritten if rewritten else question
+
+
+
 
 def get_embedding_model():
     """延迟加载本地 embedding 模型，避免脚本一启动就卡在下载上。"""
@@ -186,6 +220,11 @@ def main():
         print("问题不能为空。")
         return
 
+    print("正在改写问题...")
+    rewritten = rewrite_query(question)
+    print(f"改写后：{rewritten}")
+
+    query_embedding = get_embedding(rewritten)
     print("正在检索...")
     query_embedding = get_embedding(question)
     top_chunks = find_top_k(query_embedding, chunks, k=3)
