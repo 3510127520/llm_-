@@ -159,6 +159,40 @@ def find_top_k(query_embedding, chunks, k=3):
     scored.sort(key=lambda x: x[0], reverse=True)
     return scored[:k]
 
+import jieba
+from rank_bm25 import BM25Okapi
+
+def tokenize(text):
+    """中文分词"""
+    return list(jieba.cut(text))
+
+def keyword_search(question,chunks,k=10):
+    """用 BM25 做关键词检索，返回top—k"""
+    tokenized_corpus = [tokenize(c["content"]) for c in chunks]
+    bm25 = BM25Okapi(tokenized_corpus)
+    tokenized_query = tokenize(question)
+    scores = bm25.get_scores(tokenized_query)
+    ranked = sorted(zip(scores,chunks), key=lambda x: x[0], reverse=True)
+    return ranked[:k]    
+
+def hybrid_search(question, query_embedding, chunks, k=3, rrf_k=60):
+    """向量检索+关键词检索，用REF合并排名"""
+    #两路各取前 10
+    vec_results = find_top_k(query_embedding, chunks,k=10)
+    kw_results = keyword_search(question, chunks,k=10)
+
+    scores = {}
+    chunks_map = {}
+
+    #向量检索排名加分
+    for rank,(_,chunk) in enumerate(vec_results):
+        key = chunk["source"]
+        scores[key] = scores.get(key,0) + 1/(rrf_k + rank + 1)
+        chunks_map[key] = chunk
+
+    #按总分排序，取前k
+    sorted_items = sorted(scores.items(),key=lambda x: x[1],reverse=True)
+    return[(score, chunks_map[key]) for key, score in sorted_items[:k]]
 
 # ====== 4. 生成回答（OpenAI 兼容接口，默认 DeepSeek） ======
 def ask_question(question, context):
@@ -203,6 +237,26 @@ def ask_question(question, context):
     print("DEBUG: API 返回内容：", data)
     return data["choices"][0]["message"]["content"]
 
+_reranker = None
+
+def get_reranker():
+    """延迟加载 Rarank 模型"""
+    global _reranker
+    if _reranker is None:
+        from sentence_transformers import CrossEncoder
+        print("正在加载 Rerank 模型。。。")
+        _reranker = CrossEncoder("BAAI/bge-reranker-base")
+    return _reranker
+
+def rerank(question, candidates, top_k=3):
+    """对候选块重新打分排序"""
+    reranker = get_reranker()
+    pairs = [(question,chunk["content"])for _,chunk in candidates]
+    scores = reranker.predict(pairs)
+    ranked = sorted(zip(scores,[chunk for _, chunk in candidates]),
+                    key=lambda x:x[0],reverse=True)
+    return ranked[:top_k]
+
 
 # ====== 5. 主程序 ======
 def main():
@@ -217,8 +271,8 @@ def main():
     print(f"已加载 {len(chunks)} 个文档")
     question = read_question()
     if not question:
-        print("问题不能为空。")
-        return
+         print("问题不能为空。")
+         return
 
     print("正在改写问题...")
     rewritten = rewrite_query(question)
@@ -227,12 +281,13 @@ def main():
     query_embedding = get_embedding(rewritten)
     print("正在检索...")
     query_embedding = get_embedding(question)
-    top_chunks = find_top_k(query_embedding, chunks, k=3)
+    candidates = hybrid_search(question, query_embedding, chunks, k=10)  # 先取10个
+    top_chunks = rerank(question, candidates, top_k=3)                   # 再精排取3个
 
     #打印检索到的3个来源
-    print("找到以下相关文档：")
+    print("Rerank 后选出以下文档：")
     for score, chunk in top_chunks:
-        print(f"  - {chunk['source']}(相似度：{score:.4f})")
+      print(f"  - {chunk['source']}（Rerank 得分：{score:.4f}）")
 
     #把3个块的内容拼接起来，一起发给大模型
     context = "\n\n---\n\n".join([chunk["content"] for score, chunk in top_chunks])
